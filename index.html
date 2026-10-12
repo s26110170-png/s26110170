@@ -451,9 +451,9 @@
       <div class="status-bar">
         <div class="status-item"><div class="status-dot"></div> MAIN LINK: ACTIVE</div>
         <div class="status-item">•</div>
-        <div class="status-item">CLEARANCE: LEVEL 02</div>
+        <div class="status-item">CLEARANCE: LEVEL 03</div>
         <div class="status-item">•</div>
-        <div class="status-item">QUESTS: 2 / 16 COMPLETED</div>
+        <div class="status-item">QUESTS: 3 / 16 COMPLETED</div>
       </div>
     </header>
 
@@ -489,21 +489,22 @@
         </div>
       </a>
 
-      <!-- Week 3 to 16: Locked -->
-      <div class="quest-card locked" onclick="triggerLockedFX(this, 'Week 3')">
+      <!-- Week 3: Unlocked -->
+      <a href="w3/index.html" class="quest-card unlocked" onclick="playBeep(880)">
         <div>
           <div class="quest-header">
             <span class="quest-number">QUEST_03</span>
-            <span class="quest-status status-locked-badge">🔒 LOCKED</span>
+            <span class="quest-status status-cleared">UNLOCKED</span>
           </div>
-          <div class="quest-title">Week 3 - 尚未解鎖</div>
+          <div class="quest-title">Week 3 - 迷因產生器</div>
         </div>
         <div class="quest-footer">
-          <span>ACCESS: DENIED</span>
-          <span>🔒 RESTRICTED</span>
+          <span>ACCESS: GRANTED</span>
+          <span class="codepen-btn" onclick="event.stopPropagation(); playBeep(1200); window.open('https://codepen.io/editor/diplpqyw-the-encoder/pen/01a12f26-a14d-7cc6-82d1-1a4d6b2185da', '_blank');">CodePen ↗</span>
         </div>
-      </div>
+      </a>
 
+      <!-- Week 4 to 16: Locked -->
       <div class="quest-card locked" onclick="triggerLockedFX(this, 'Week 4')">
         <div>
           <div class="quest-header">
