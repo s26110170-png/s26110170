@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自定義迷因 (Meme) 產生器</title>
+
+  <!-- 引入 Google Fonts: 使用 Noto Sans TC 的極粗體，讓中文迷因也很有氣勢 -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
+  
+  <!-- 引入 html2canvas CDN，用來把網頁元素「截圖」變成圖片下載 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    /* 🎨 CSS 區塊：負責網頁的排版與外觀設計 */
+    
+    * {
+      box-sizing: border-box; /* 讓邊距計算更直覺 */
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #121212; /* 深色背景 */
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* 主要的容器：使用 Flexbox 來達成左邊控制台、右邊預覽 */
+    .container {
+      display: flex;
+      flex-direction: row; /* 電腦版是左右排列 */
+      gap: 30px;
+      width: 100%;
+      max-width: 1000px;
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    /* 左側/上方的控制面板 */
+    .controls {
+      flex: 1; /* 佔據 1 份的空間 */
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    /* 右側/下方的迷因預覽區 */
+    .preview-container {
+      flex: 1.5; /* 佔據 1.5 份的空間，讓圖片大一點 */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 10px;
+      border: 2px dashed #444; /* 虛線邊框，提示這是一個畫布 */
+    }
+
+    /* 控制面板裡的標題與輸入框設定 */
+    h2 { margin-bottom: 10px; color: #00ffcc; } /* 酷炫的螢光綠 */
+    
+    label { font-size: 14px; color: #aaa; margin-bottom: -5px; }
+
+    input[type="text"], input[type="file"] {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #2a2a2a;
+      color: white;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+
+    /* 超酷的下載按鈕設計 */
+    .download-btn {
+      margin-top: 20px;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(45deg, #ff007f, #7000ff); /* 漸層色彩 */
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .download-btn:hover {
+      transform: scale(1.05); /* 滑鼠游標移過去時會放大一點點 */
+      box-shadow: 0 0 15px rgba(112, 0, 255, 0.6);
+    }
+
+    /* ========================================= */
+    /* 🖼️ 迷因圖片與文字合成區 (非常關鍵) */
+    /* ========================================= */
+    #meme-canvas {
+      position: relative; /* 設定為相對定位，讓裡面的文字可以「絕對定位」在它上面 */
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    /* 迷因底圖 */
+    #meme-image {
+      display: block;
+      max-width: 100%;
+      max-height: 60vh; /* 限制高度避免圖片過大 */
+      object-fit: contain;
+    }
+
+    /* 迷因文字共通設定 */
+    .meme-text {
+      position: absolute; /* 飄浮在圖片上方 */
+      left: 50%; /* 水平置中第一步 */
+      transform: translateX(-50%); /* 水平置中第二步 */
+      width: 95%;
+      text-align: center;
+      font-family: 'Noto Sans TC', 'Impact', sans-serif;
+      font-weight: 900;
+      color: white;
+      font-size: 40px;
+      text-transform: uppercase;
+      word-wrap: break-word;
+      /* 經典迷因的黑邊效果，用 text-shadow 疊加出來 */
+      text-shadow: 
+        2px 2px 0 #000, 
+        -2px -2px 0 #000, 
+        2px -2px 0 #000, 
+        -2px 2px 0 #000,
+        0px 2px 0 #000,
+        2px 0px 0 #000,
+        0px -2px 0 #000,
+        -2px 0px 0 #000;
+      pointer-events: none; /* 讓滑鼠點擊穿透文字，不會干擾圖片操作 */
+    }
+
+    /* 上方文字初始位置 */
+    #text-top { top: 5%; }
+    /* 下方文字初始位置 */
+    #text-bottom { bottom: 5%; }
+
+    /* 📱 手機版響應式 (RWD) 設定 */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column; /* 螢幕太小時，改成上下排列 */
+      }
+      .preview-container {
+        order: -1; /* 讓預覽圖在手機版跑到最上面 */
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 控制面板區 -->
+    <div class="controls">
+      <h2>🔥 迷因產生器</h2>
+      
+      <!-- 1. 圖片上傳 (本機檔案) -->
+      <label for="image-upload">上傳底圖 (本機不需擔心 CORS 錯誤)</label>
+      <input type="file" id="image-upload" accept="image/*">
+
+      <!-- 2. 文字輸入框 -->
+      <label for="top-text-input">上方文字</label>
+      <input type="text" id="top-text-input" placeholder="輸入上方文字...">
+      
+      <label for="bottom-text-input">下方文字</label>
+      <input type="text" id="bottom-text-input" placeholder="輸入下方文字...">
+
+      <!-- 3. 參數滑桿控制 -->
+      <label for="font-size-slider">字體大小</label>
+      <input type="range" id="font-size-slider" min="10" max="100" value="40">
+
+      <label for="top-pos-slider">上方文字位置 (微調)</label>
+      <input type="range" id="top-pos-slider" min="0" max="50" value="5">
+
+      <label for="bottom-pos-slider">下方文字位置 (微調)</label>
+      <input type="range" id="bottom-pos-slider" min="0" max="50" value="5">
+
+      <!-- 4. 一鍵下載按鈕 -->
+      <button class="download-btn" id="download-btn">⬇️ 下載我的迷因！</button>
+    </div>
+
+    <!-- 迷因即時預覽區 -->
+    <div class="preview-container">
+      <!-- 這個區塊就是 html2canvas 會去「截圖」的範圍 -->
+      <div id="meme-canvas">
+        <img id="meme-image" src="" alt="請上傳一張圖片" style="display:none;" />
+        <div id="text-top" class="meme-text">上方文字預覽</div>
+        <div id="text-bottom" class="meme-text">下方文字預覽</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ⚙️ JavaScript 區塊：負責讓網頁「動起來」的邏輯 */
+
+    // 先抓取 HTML 中我們需要操作的各種元素 (綁定身分證)
+    const imageUpload = document.getElementById('image-upload');
+    const memeImage = document.getElementById('meme-image');
+    const memeCanvas = document.getElementById('meme-canvas');
+    
+    const topTextInput = document.getElementById('top-text-input');
+    const bottomTextInput = document.getElementById('bottom-text-input');
+    const textTop = document.getElementById('text-top');
+    const textBottom = document.getElementById('text-bottom');
+    
+    const fontSizeSlider = document.getElementById('font-size-slider');
+    const topPosSlider = document.getElementById('top-pos-slider');
+    const bottomPosSlider = document.getElementById('bottom-pos-slider');
+    
+    const downloadBtn = document.getElementById('download-btn');
+
+    // --------------------------------------------------
+    // 功能 1：本機圖片上傳 (FileReader 避開 CORS 限制)
+    // --------------------------------------------------
+    imageUpload.addEventListener('change', function(event) {
+      // 取得使用者選取的檔案
+      const file = event.target.files[0]; 
+      
+      if (file) {
+        // FileReader 是一個瀏覽器內建工具，可以把檔案讀取成「資料網址 (Data URL)」
+        const reader = new FileReader(); 
+        
+        // 當讀取完成時，執行這個函數
+        reader.onload = function(e) {
+          memeImage.src = e.target.result; // 把圖片的 src 換成讀取到的檔案資料
+          memeImage.style.display = 'block'; // 顯示圖片
+        };
+        
+        // 指示 FileReader 開始讀取該檔案
+        reader.readAsDataURL(file); 
+      }
+    });
+
+    // --------------------------------------------------
+    // 功能 2：雙層文字輸入 (即時同步)
+    // --------------------------------------------------
+    // 當你在輸入框打字時 ('input' 事件)，馬上把字塞到圖片上的文字區塊裡
+    topTextInput.addEventListener('input', function() {
+      textTop.innerText = this.value;
+    });
+    
+    bottomTextInput.addEventListener('input', function() {
+      textBottom.innerText = this.value;
+    });
+
+    // --------------------------------------------------
+    // 功能 3：參數滑桿控制
+    // --------------------------------------------------
+    // 字體大小：根據滑桿的數字，修改 CSS 的 font-size，記得加上 'px' 單位
+    fontSizeSlider.addEventListener('input', function() {
+      const newSize = this.value + 'px';
+      textTop.style.fontSize = newSize;
+      textBottom.style.fontSize = newSize;
+    });
+
+    // 位置微調：根據滑桿數字修改 CSS 的 top 或 bottom，記得加上 '%' 單位
+    topPosSlider.addEventListener('input', function() {
+      textTop.style.top = this.value + '%';
+    });
+
+    bottomPosSlider.addEventListener('input', function() {
+      textBottom.style.bottom = this.value + '%';
+    });
+
+    // --------------------------------------------------
+    // 功能 4：一鍵下載圖檔 (使用 html2canvas)
+    // --------------------------------------------------
+    downloadBtn.addEventListener('click', function() {
+      // 檢查有沒有上傳圖片 (如果沒有 src 就擋下來)
+      if (!memeImage.src || memeImage.src === window.location.href) {
+        alert("請先上傳一張圖片喔！");
+        return;
+      }
+
+      // 把「下載按鈕」的文字暫時改成「處理中」，讓使用者知道有在跑
+      downloadBtn.innerText = "⏳ 產生中...";
+
+      // html2canvas 負責把指定的區塊 (memeCanvas) 畫成 Canvas 圖片
+      html2canvas(memeCanvas, { 
+        useCORS: true,       // 允許處理跨域圖片 (雖然我們是本機上傳，但開啟比較保險)
+        backgroundColor: null // 背景透明，避免多出白色底色
+      }).then(function(canvas) {
+        
+        // 創造一個虛擬的超連結 <a> 標籤
+        const link = document.createElement('a');
+        link.download = 'my-meme.png'; // 設定下載的預設檔名
+        
+        // 將 Canvas 轉換成可以下載的圖片網址格式
+        link.href = canvas.toDataURL('image/png');
+        
+        // 模擬人類點擊那個超連結，觸發下載！
+        link.click();
+        
+        // 恢復按鈕原本的文字
+        downloadBtn.innerText = "⬇️ 下載我的迷因！";
+      });
+    });
+
+  </script>
+</body>
+</html>
