@@ -504,20 +504,22 @@
         </div>
       </a>
 
-      <!-- Week 4 to 16: Locked -->
-      <div class="quest-card locked" onclick="triggerLockedFX(this, 'Week 4')">
+            <!-- Week 4: Unlocked -->
+      <a href="w4/index.html" class="quest-card unlocked" onclick="playBeep(880)">
         <div>
           <div class="quest-header">
             <span class="quest-number">QUEST_04</span>
-            <span class="quest-status status-locked-badge">🔒 LOCKED</span>
+            <span class="quest-status status-cleared">UNLOCKED</span>
           </div>
-          <div class="quest-title">Week 4 - 尚未解鎖</div>
+          <div class="quest-title">Week 4 - KNOCK KNOCK</div>
         </div>
         <div class="quest-footer">
-          <span>ACCESS: DENIED</span>
-          <span>🔒 RESTRICTED</span>
+          <span>ACCESS: GRANTED</span>
+          <span class="codepen-btn" onclick="event.stopPropagation(); playBeep(1200); window.open('https://codepen.io/editor/diplpqyw-the-encoder/pen/01a1532a-a2c7-7d6f-b213-4a63f2a7b764', '_blank');">CodePen ↗</span>
         </div>
-      </div>
+      </a>
+      
+      <!-- Week 5 to 16: Locked -->
 
       <div class="quest-card locked" onclick="triggerLockedFX(this, 'Week 5')">
         <div>
