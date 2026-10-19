@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今天吃什麼？</title>
+<style>
+    /* 活潑可愛的黃色/橘色系風格設計 */
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, '微軟正黑體';
+        background-color: #fff8e1; /* 溫暖的淺黃底色 */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        text-align: center;
+    }
+    
+    .container {
+        background-color: #ffffff;
+        border: 8px solid #ffcc80; /* 活潑的橘色邊框 */
+        border-radius: 30px;
+        padding: 40px;
+        box-shadow: 0 10px 25px rgba(255, 152, 0, 0.2);
+        max-width: 500px;
+        width: 90%;
+    }
+
+    /* 大標題樣式與彈跳動畫 */
+    h1 {
+        color: #f57c00; 
+        font-size: 3.5em;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 0px #ffe0b2;
+    }
+
+    .bounce {
+        animation: bounceAnim 0.6s cubic-bezier(0.28, 0.84, 0.42, 1);
+    }
+
+    @keyframes bounceAnim {
+        0%   { transform: scale(1,1)    translateY(0); }
+        10%  { transform: scale(1.1,.9) translateY(0); }
+        30%  { transform: scale(.9,1.1) translateY(-40px); }
+        50%  { transform: scale(1.05,.95) translateY(0); }
+        57%  { transform: scale(1,1)    translateY(-7px); }
+        64%  { transform: scale(1,1)    translateY(0); }
+        100% { transform: scale(1,1)    translateY(0); }
+    }
+
+    /* 照片區域樣式 */
+    #foodImage {
+        max-width: 100%;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 20px;
+        margin-bottom: 15px;
+        display: none;
+        border: 4px solid #ffe0b2;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Google Map 連結按鈕樣式 */
+    #mapsLink {
+        background-color: #e0f7fa;
+        color: #00838f;
+        text-decoration: none;
+        padding: 12px 25px;
+        border-radius: 30px;
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-bottom: 25px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 2px solid #b2ebf2;
+        transition: all 0.2s;
+        display: none; /* 預設隱藏 */
+    }
+
+    #mapsLink:hover {
+        background-color: #b2ebf2;
+        transform: translateY(-2px);
+    }
+
+    /* 抽籤大按鈕樣式 */
+    #drawButton {
+        background-color: #ff9800;
+        color: white;
+        border: none;
+        padding: 18px 50px;
+        font-size: 1.8em;
+        font-weight: bold;
+        border-radius: 50px;
+        cursor: pointer;
+        box-shadow: 0 6px 0px #e65100, 0 10px 15px rgba(255, 152, 0, 0.4);
+        transition: all 0.1s;
+        display: block;
+        margin: 0 auto;
+        margin-top: 10px;
+    }
+
+    #drawButton:hover {
+        background-color: #ffa726;
+    }
+    
+    #drawButton:active {
+        box-shadow: 0 2px 0px #e65100, 0 4px 6px rgba(255, 152, 0, 0.4);
+        transform: translateY(4px);
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="resultTitle">今天吃什麼？</h1>
+    
+    <img id="foodImage" src="" alt="美食照片">
+    <br>
+    <a id="mapsLink" href="#" target="_blank">
+        📍 馬上出發幫我連結去 google map
+    </a>
+    
+    <button id="drawButton">點我抽籤</button>
+</div>
+
+<script>
+    // 建立食物資料庫，包含名稱、圖片連結與 Google Map 搜尋關鍵字
+    const foods = [
+        { 
+            name: '排骨飯', 
+            image: 'https://i.postimg.cc/k4G9r58K/unnamed-(8).jpg', 
+            query: '佳香排骨飯 820高雄市岡山區仁壽里柳橋西路42-2號' 
+        },
+        { 
+            name: '水餃', 
+            // 更新水餃圖片連結
+            image: 'https://i.postimg.cc/9QZ4DLDP/unnamed-(5).jpg',
+            query: '水餃伯水餃 815高雄市大社區翠屏里大吉路36~1號' 
+        },
+        { 
+            name: '麥當勞', 
+            image: 'https://images.unsplash.com/photo-1619881589316-56c7f9e6b587?auto=format&fit=crop&w=500&q=80', 
+            query: '麥當勞-橋頭成功南餐廳 825高雄市橋頭區新莊里成功南路281號' 
+        },
+        { 
+            name: '義大利麵', 
+            image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=500&q=80', 
+            query: '下次義定-楠梓店｜義大利麵外帶專賣店 811高雄市楠梓區瑞屏里瑞仁路129號' 
+        },
+        { 
+            name: '便利商店', 
+            image: 'https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=500&q=80', 
+            query: '全家便利商店 燕巢深水店 824高雄市燕巢區深水里大仁路2-5號' 
+        }
+    ];
+
+    const titleElement = document.getElementById('resultTitle');
+    const imageElement = document.getElementById('foodImage');
+    const mapsLinkElement = document.getElementById('mapsLink');
+    const drawButton = document.getElementById('drawButton');
+
+    drawButton.addEventListener('click', () => {
+        // 重製並觸發彈跳動畫
+        titleElement.classList.remove('bounce');
+        void titleElement.offsetWidth; // 強制重繪以重啟動畫
+        titleElement.classList.add('bounce');
+
+        // 隨機挑選食物
+        const randomIndex = Math.floor(Math.random() * foods.length);
+        const selectedFood = foods[randomIndex];
+
+        // 延遲一下讓動畫飛到最高點時替換文字，視覺效果更好
+        setTimeout(() => {
+            // 替換大標題
+            titleElement.textContent = selectedFood.name;
+
+            // 顯示指定照片
+            imageElement.src = selectedFood.image;
+            imageElement.style.display = 'inline-block';
+
+            // 設定 Google Map 連結並顯示按鈕
+            // 使用 encodeURIComponent 確保中文地址能正確轉換成網址格式
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedFood.query)}`;
+            mapsLinkElement.href = mapsUrl;
+            mapsLinkElement.style.display = 'inline-flex';
+        }, 150); 
+    });
+</script>
+
+</body>
+</html>
